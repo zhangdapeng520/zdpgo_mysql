@@ -78,3 +78,17 @@ func (mysql *Mysql) DeleteTable(table string){
 	sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
 	mysql.Execute(sql)
 }
+
+
+
+// 查询单条数据
+func (mysql *Mysql) QueryRow(sql string, id int) *sql.Row{
+	row := mysql.Db.QueryRow(sql, id)
+	return row
+}
+
+// 查询多条数据
+func (mysql *Mysql) Query(sql string, args ...interface{}) (*sql.Rows, error){
+	rows, err := mysql.Db.Query(sql, args...)
+	return rows, err
+}
