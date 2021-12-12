@@ -60,3 +60,21 @@ func (mysql *Mysql) Init() {
 func (mysql *Mysql) Close(){
 	mysql.Db.Close()
 }
+
+// 执行SQL语句
+func (mysql *Mysql) Execute(sql string, args ...interface{})sql.Result{
+	mysql.Logger.Info("执行SQL语句：",sql)
+	mysql.Logger.Info("参数：",args)
+	ret, err:=mysql.Db.Exec(sql, args...)
+	if err!=nil{
+		mysql.Logger.Error("执行SQL语句失败：", err)
+		return nil
+	}
+	return ret
+}
+
+// 删除表格
+func (mysql *Mysql) DeleteTable(table string){
+	sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
+	mysql.Execute(sql)
+}
