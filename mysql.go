@@ -65,9 +65,22 @@ func (mysql *Mysql) Close(){
 func (mysql *Mysql) Execute(sql string, args ...interface{})sql.Result{
 	mysql.Logger.Info("执行SQL语句：",sql)
 	mysql.Logger.Info("参数：",args)
+
+	// 创建事务
+	tx, err := mysql.Db.Begin()
+	if err != nil{
+		if tx != nil{
+			tx.Rollback() // 回滚
+		}
+		mysql.Logger.Error("创建事务失败：", err)
+		return nil
+	}
+
+	// 预处理SQL
 	stmt, err := mysql.Db.Prepare(sql)
 	if err !=nil{
 		mysql.Logger.Error("Prepare SQL语句失败：", err)
+		tx.Rollback()
 		return nil
 	}
 	defer stmt.Close()
@@ -75,8 +88,10 @@ func (mysql *Mysql) Execute(sql string, args ...interface{})sql.Result{
 	ret, err:=stmt.Exec(args...)
 	if err!=nil{
 		mysql.Logger.Error("执行SQL语句失败：", err)
+		tx.Rollback()
 		return nil
 	}
+	tx.Commit() // 提交事务
 	return ret
 }
 
