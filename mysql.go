@@ -65,7 +65,14 @@ func (mysql *Mysql) Close(){
 func (mysql *Mysql) Execute(sql string, args ...interface{})sql.Result{
 	mysql.Logger.Info("执行SQL语句：",sql)
 	mysql.Logger.Info("参数：",args)
-	ret, err:=mysql.Db.Exec(sql, args...)
+	stmt, err := mysql.Db.Prepare(sql)
+	if err !=nil{
+		mysql.Logger.Error("Prepare SQL语句失败：", err)
+		return nil
+	}
+	defer stmt.Close()
+
+	ret, err:=stmt.Exec(args...)
 	if err!=nil{
 		mysql.Logger.Error("执行SQL语句失败：", err)
 		return nil
@@ -83,12 +90,26 @@ func (mysql *Mysql) DeleteTable(table string){
 
 // 查询单条数据
 func (mysql *Mysql) QueryRow(sql string, id int) *sql.Row{
-	row := mysql.Db.QueryRow(sql, id)
+	stmt, err := mysql.Db.Prepare(sql)
+	if err !=nil{
+		mysql.Logger.Error("Prepare SQL语句失败：", err)
+		return nil
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRow(id)
 	return row
 }
 
 // 查询多条数据
 func (mysql *Mysql) Query(sql string, args ...interface{}) (*sql.Rows, error){
-	rows, err := mysql.Db.Query(sql, args...)
+	stmt, err := mysql.Db.Prepare(sql)
+	if err != nil{
+		mysql.Logger.Error("Prepare SQL语句失败：", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(args...)
 	return rows, err
 }
