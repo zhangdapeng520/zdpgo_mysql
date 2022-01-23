@@ -1,4 +1,4 @@
 github.com/go-sql-driver/mysql v1.6.0 h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfCHuOE=
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
-github.com/zhangdapeng520/zdpgo_log v1.0.0 h1:yJx+zymextwOoR3+aKFqw2oF134hc0+Gp2QVCi39iyI=
-github.com/zhangdapeng520/zdpgo_log v1.0.0/go.mod h1:+J0wOifYgn7BLLhZiSvsTHBkYknw3ijuXysQnaQA9h8=
+github.com/zhangdapeng520/zdpgo_log v1.2.0 h1:bz2Dnw77nq8LCLMS6q4OXLpAnKyw3pz+iGOOANqaLO4=
+github.com/zhangdapeng520/zdpgo_log v1.2.0/go.mod h1:65ivnpq+rOAkgPYy5bFP9argJBiGPUg0rw7Zi5MhviY=
