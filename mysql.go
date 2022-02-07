@@ -2,125 +2,145 @@ package zdpgo_mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-
-	"github.com/zhangdapeng520/zdpgo_log"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/zhangdapeng520/zdpgo_zap"
 )
 
 type Mysql struct {
-	Host string // ip
-	Port int // 端口
-	Username string // 用户名
-	Password string // 密码
-	Database string // 数据库
-	LogFile string // 日志名称
-	MaxConnectNum int // 最大连接数
-	MaxFreeConnectNum int // 最大闲置连接数
-	Logger *zdpgo_log.Logger
-	Db *sql.DB
+	log *zdpgo_zap.Zap
+	db  *sql.DB
 }
 
-// 建立连接
-func (mysql *Mysql) Init() {
+// MysqlConfig MySQL配置信息
+type MysqlConfig struct {
+	Debug             bool   // 是否为debug模式
+	Host              string // ip
+	Port              int    // 端口
+	Username          string // 用户名
+	Password          string // 密码
+	Database          string // 数据库
+	LogFilePath       string // 日志路径
+	MaxConnectNum     int    // 最大连接数
+	MaxFreeConnectNum int    // 最大闲置连接数
+}
+
+// New 创建mysql实例
+func New(config MysqlConfig) *Mysql {
+	m := Mysql{}
+
 	// 初始化日志
-	if mysql.LogFile == ""{
-		mysql.LogFile = "zdpgo_mysql.log"
+	if config.LogFilePath == "" {
+		config.LogFilePath = "zdpgo_mysql.log"
 	}
-	mysql.Logger = zdpgo_log.NewLogger(mysql.LogFile)
+	m.log = zdpgo_zap.New(zdpgo_zap.ZapConfig{
+		Debug:        config.Debug,
+		OpenGlobal:   false,
+		OpenFileName: false,
+		LogFilePath:  config.LogFilePath,
+	})
 
-	// 初始化Db
-	address := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",mysql.Username,mysql.Password,mysql.Host,mysql.Port,mysql.Database)
-	db, err:= sql.Open("mysql", address)
-	if err!=nil{
-		mysql.Logger.Error("连接数据库失败：", err)
+	// 初始化连接
+	address := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", config.Username, config.Password, config.Host, config.Port, config.Database)
+	db, err := sql.Open("mysql", address)
+	if err != nil {
+		m.log.Error("连接MySQL数据库失败", "error", err.Error())
 	}
-
-	// 尝试与数据库建立连接
-	err = db.Ping()
-	if err!= nil{
-		mysql.Logger.Error("Ping数据库失败：", err)
-	}
-
-	// 初始化
-	mysql.Db = db
+	m.db = db
 
 	// 设置最大连接数和最大闲置连接数
-	if mysql.MaxConnectNum == 0{
-		mysql.MaxConnectNum = 100
+	if config.MaxConnectNum == 0 {
+		config.MaxConnectNum = 100
 	}
-	mysql.Db.SetMaxOpenConns(mysql.MaxConnectNum)
+	m.db.SetMaxOpenConns(config.MaxConnectNum)
 
-	if mysql.MaxFreeConnectNum==0{
-		mysql.MaxFreeConnectNum = 10
+	if config.MaxFreeConnectNum == 0 {
+		config.MaxFreeConnectNum = 10
 	}
-	mysql.Db.SetMaxIdleConns(mysql.MaxFreeConnectNum)
+	m.db.SetMaxIdleConns(config.MaxFreeConnectNum)
+
+	return &m
 }
 
-// 关闭数据库连接
-func (mysql *Mysql) Close(){
-	mysql.Db.Close()
+// Close 关闭数据库连接
+func (m *Mysql) Close() error {
+	err := m.db.Close()
+	if err != nil {
+		m.log.Error("关闭MySQL数据库连接失败", "error", err.Error())
+	}
+	return err
 }
 
-// 执行SQL语句
-func (mysql *Mysql) Execute(sql string, args ...interface{})sql.Result{
-	mysql.Logger.Info("执行SQL语句：",sql)
-	mysql.Logger.Info("参数：",args)
-
-	// 创建事务
-	tx, err := mysql.Db.Begin()
-	if err != nil{
-		if tx != nil{
-			tx.Rollback() // 回滚
-		}
-		mysql.Logger.Error("创建事务失败：", err)
-		return nil
-	}
+// Execute 执行SQL语句
+func (m *Mysql) Execute(sql string, args ...interface{}) sql.Result {
+	m.log.Info("执行SQL语句", "sql", sql, "args", args)
 
 	// 预处理SQL
-	stmt, err := mysql.Db.Prepare(sql)
-	if err !=nil{
-		mysql.Logger.Error("Prepare SQL语句失败：", err)
-		tx.Rollback()
+	stmt, err := m.db.Prepare(sql)
+	if err != nil {
+		m.log.Error("Prepare SQL语句失败", "error", err.Error())
 		return nil
 	}
 	defer stmt.Close()
 
-	ret, err:=stmt.Exec(args...)
-	if err!=nil{
-		mysql.Logger.Error("执行SQL语句失败：", err)
-		tx.Rollback()
+	// 执行SQL语句
+	ret, err := stmt.Exec(args...)
+	if err != nil {
+		m.log.Error("执行SQL语句失败", "error", err)
 		return nil
 	}
-	tx.Commit() // 提交事务
 	return ret
 }
 
-// 删除表格
-func (mysql *Mysql) DeleteTable(table string){
-	sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
-	mysql.Execute(sql)
+// DeleteTable 删除表格
+func (m *Mysql) DeleteTable(table string) {
+	s := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
+	m.Execute(s)
 }
 
+// QueryRow 查询单条数据
+func (m *Mysql) QueryRow(sql string, args ...interface{}) (row *sql.Row, err error) {
+	m.log.Info("QueryRow 查询单条数据", "sql", sql)
 
+	// 预处理SQL语句
+	stmt, err := m.db.Prepare(sql)
 
-// 查询单条数据
-func (mysql *Mysql) QueryRow(sql string, id int) *sql.Row{
-	stmt, err := mysql.Db.Prepare(sql)
-	if err !=nil{
-		mysql.Logger.Error("Prepare SQL语句失败：", err)
-		return nil
+	// 处理错误
+	if err != nil {
+		m.log.Error("Prepare SQL语句失败", "error", err)
+		return nil, err
 	}
-	defer stmt.Close()
+	if stmt == nil {
+		m.log.Error("stml为nil，预处理语句失败")
+		err = errors.New("stml为nil，预处理语句失败")
+		return nil, err
+	}
 
-	row := stmt.QueryRow(id)
-	return row
+	// 执行查询
+	if args != nil {
+		row = stmt.QueryRow(args)
+	} else {
+		row = stmt.QueryRow()
+	}
+
+	// 关闭预处理对象
+	err = stmt.Close()
+	if err != nil {
+		m.log.Error("关闭预处理对象失败", "error", err.Error())
+		return nil, err
+	}
+
+	// 正常返回
+	return row, nil
 }
 
-// 查询多条数据
-func (mysql *Mysql) Query(sql string, args ...interface{}) (*sql.Rows, error){
-	stmt, err := mysql.Db.Prepare(sql)
-	if err != nil{
-		mysql.Logger.Error("Prepare SQL语句失败：", err)
+// Query 查询多条数据
+func (m *Mysql) Query(sql string, args ...interface{}) (*sql.Rows, error) {
+	m.log.Info("Query 查询多条数据", "sql", sql, "args", args)
+	stmt, err := m.db.Prepare(sql)
+	if err != nil {
+		m.log.Error("Prepare SQL语句失败", "error", err)
 		return nil, err
 	}
 	defer stmt.Close()
