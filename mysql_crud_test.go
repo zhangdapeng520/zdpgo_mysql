@@ -2,12 +2,11 @@ package zdpgo_mysql
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 )
 
 type Student struct {
-	Id     int
+	Id     int64
 	Name   string
 	Age    int
 	Gender bool
@@ -31,97 +30,90 @@ func TestCreateTable(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	m := prepareMysql()
+	defer m.Close()
 
-	sql := `
-	INSERT INTO student(name, age, gender) VALUES(?, ?, ?);
-	`
-	add, err := m.Add(sql, "李四", 22, true)
+	// 准备参数
+	table := "student"
+	columns := []string{"name", "age", "gender"}
+	values := []interface{}{"李四", 22, true}
+
+	// 执行添加
+	add, err := m.Add(table, columns, values)
 	if err != nil {
+		fmt.Println("执行添加失败：", err)
 		return
 	}
 	fmt.Println("插入数据成功：", add, err)
-	m.Close()
+
 }
 
-func TestUpdate(t *testing.T) {
+func TestMysql_UpdateById(t *testing.T) {
 	m := prepareMysql()
 
-	sql := `
-	UPDATE student SET name = ? where id = ?;
-	`
-	update, err := m.Update(sql, "李四111", 1)
+	columns := []string{"name", "age"}
+	values := []interface{}{"李四111", 333}
+
+	update, err := m.UpdateById("student", columns, values, 1)
 	fmt.Println(update, err)
 	m.Close()
 }
 
-func TestFind(t *testing.T) {
+func TestMysql_FindById(t *testing.T) {
 	m := prepareMysql()
 
-	student := &Student{}
+	student := Student{}
 	row, err := m.FindById("student", []string{"id", "name", "age", "gender"}, 1)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(row)
-	var (
-		d      []string
-		id     int
-		name   string
-		age    int
-		gender bool
-	)
-	//err = row.Scan(&student.Id, &student.Name, &student.Age, &student.Gender)
-	err = row.Scan(&d)
-	fmt.Println(d)
-	fmt.Println(id, name, age, gender)
-	if err != nil {
-		fmt.Println("row.Scan 反射数据失败：", err)
-		return
-	}
-	fmt.Println(student.Id, student.Name, student.Age, student.Gender)
-	m.Close()
-}
-
-func TestFind1(t *testing.T) {
-	m := prepareMysql()
-	row := m.db.QueryRow("select * from student")
-	fmt.Printf("row的数据类型：%v\n", reflect.TypeOf(row))
-	student := &Student{}
-	err := row.Scan(&student.Id, &student.Name, &student.Age, &student.Gender)
-	if err != nil {
-		fmt.Println("row.Scan 反射数据失败：", err)
-		return
-	}
-	fmt.Println(student.Id, student.Name, student.Age, student.Gender)
-	m.Close()
-}
-
-func TestFind2(t *testing.T) {
-	m := prepareMysql()
-	student := Student{}
-	row, err := m.QueryRow("select * from student")
-	fmt.Printf("row的数据类型：%v\n", reflect.TypeOf(row))
 	err = row.Scan(&student.Id, &student.Name, &student.Age, &student.Gender)
 	if err != nil {
-		fmt.Println("row.Scan 反射数据失败：", err)
+		fmt.Println(err)
 		return
 	}
 	fmt.Println(student.Id, student.Name, student.Age, student.Gender)
 	m.Close()
 }
 
-func TestFind3(t *testing.T) {
+func TestMysql_FindByIdToStruct(t *testing.T) {
 	m := prepareMysql()
-	stmt, err := m.db.Prepare("select * from student")
-	row := stmt.QueryRow()
-	fmt.Printf("row的数据类型：%v\n", reflect.TypeOf(row))
-	student := &Student{}
-	err = row.Scan(&student.Id, &student.Name, &student.Age, &student.Gender)
-	if err != nil {
-		fmt.Println("row.Scan 反射数据失败：", err)
-		return
+
+	var students []*Student
+	err := m.FindByIdToStruct("student", []string{"id", "name", "age", "gender"}, 1, &students)
+	fmt.Println(err)
+
+	for _, student := range students {
+		fmt.Println(student)
+		fmt.Println(student.Id, student.Name, student.Age, student.Gender)
 	}
-	fmt.Println(student.Id, student.Name, student.Age, student.Gender)
+	m.Close()
+}
+
+func TestMysql_FindByIdsToStruct(t *testing.T) {
+	m := prepareMysql()
+
+	var students []*Student
+	err := m.FindByIdsToStruct("student", []string{"id", "name", "age", "gender"}, []int{1, 2, 3}, &students)
+	fmt.Println(err)
+
+	for _, student := range students {
+		fmt.Println(student)
+		fmt.Println(student.Id, student.Name, student.Age, student.Gender)
+	}
+	m.Close()
+}
+
+func TestMysql_FindByPagesToStruct(t *testing.T) {
+	m := prepareMysql()
+
+	var students []*Student
+	err := m.FindByPagesToStruct("student", []string{"id", "name", "age", "gender"}, 1, 20, &students)
+	fmt.Println(err)
+
+	for _, student := range students {
+		fmt.Println(student)
+		fmt.Println(student.Id, student.Name, student.Age, student.Gender)
+	}
 	m.Close()
 }
 
@@ -175,7 +167,7 @@ func TestFindPages(t *testing.T) {
 	fmt.Println(students)
 }
 
-func TestDelete(t *testing.T) {
+func TestMySQL_DeleteById(t *testing.T) {
 	m := prepareMysql()
 	rows, err := m.DeleteById("student", 1)
 	fmt.Println(rows, err)

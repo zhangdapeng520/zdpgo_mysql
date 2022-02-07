@@ -101,7 +101,7 @@ func (m *Mysql) DeleteTable(table string) {
 
 // QueryRow 查询单条数据
 func (m *Mysql) QueryRow(sql string, args ...interface{}) (row *sql.Row, err error) {
-	m.log.Info("QueryRow 查询单条数据", "sql", sql)
+	m.log.Info("QueryRow 查询单条数据", "sql", sql, "args", args)
 
 	// 预处理SQL语句
 	stmt, err := m.db.Prepare(sql)
@@ -119,7 +119,7 @@ func (m *Mysql) QueryRow(sql string, args ...interface{}) (row *sql.Row, err err
 
 	// 执行查询
 	if args != nil {
-		row = stmt.QueryRow(args)
+		row = stmt.QueryRow(args...)
 	} else {
 		row = stmt.QueryRow()
 	}
@@ -147,4 +147,40 @@ func (m *Mysql) Query(sql string, args ...interface{}) (*sql.Rows, error) {
 
 	rows, err := stmt.Query(args...)
 	return rows, err
+}
+
+// TransRowsToMaps 将rows转换为map
+func (m *Mysql) TransRowsToMaps(rows *sql.Rows) (list []map[string]interface{}, err error) {
+	// 获取字段列表
+	columns, _ := rows.Columns()
+	columnLength := len(columns)
+
+	// 临时存储每行数据
+	cache := make([]interface{}, columnLength)
+	for index, _ := range cache { //为每一列初始化一个指针
+		var a interface{}
+		cache[index] = &a
+	}
+
+	// 转换数据
+	for rows.Next() {
+		err = rows.Scan(cache...)
+		if err != nil {
+			m.log.Error("rows.Scan 转换数据失败", "error", err.Error())
+			return nil, err
+		}
+		item := make(map[string]interface{})
+		for i, data := range cache {
+			item[columns[i]] = *data.(*interface{}) //取实际类型
+		}
+		list = append(list, item)
+	}
+
+	// 关闭rows
+	err = rows.Close()
+	if err != nil {
+		m.log.Error("rows.Close 关闭rows失败", "error", err.Error())
+		return nil, err
+	}
+	return list, nil
 }
