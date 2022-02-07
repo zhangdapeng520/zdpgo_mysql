@@ -3,20 +3,21 @@ package zdpgo_mysql
 import (
 	"fmt"
 	"testing"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
-// 测试建立连接
-func TestMysql_New(t *testing.T) {
+func prepareMysql() *Mysql {
 	m := New(MysqlConfig{
 		Debug:    true,
-		Host:     "127.0.0.1",
+		Host:     "192.168.33.101",
 		Port:     3306,
 		Username: "root",
 		Password: "root",
-		Database: "user_service",
+		Database: "test",
 	})
+	return m
+}
+
+func TestMysql_New(t *testing.T) {
+	m := prepareMysql()
 	fmt.Println(m)
-	defer m.Close()
 }
