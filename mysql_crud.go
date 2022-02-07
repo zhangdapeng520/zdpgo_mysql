@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/georgysavva/scany/sqlscan"
+	"github.com/zhangdapeng520/zdpgo_mysql/sqlscan"
 	"strconv"
 	"strings"
 )
