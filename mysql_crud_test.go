@@ -28,7 +28,8 @@ func TestCreateTable(t *testing.T) {
 	m.Close()
 }
 
-func TestAdd(t *testing.T) {
+// 测试添加数据
+func TestMysql_Add(t *testing.T) {
 	m := prepareMysql()
 	defer m.Close()
 
@@ -47,6 +48,31 @@ func TestAdd(t *testing.T) {
 
 }
 
+// 测试批量添加
+func TestMysql_AddMany(t *testing.T) {
+	m := prepareMysql()
+	defer m.Close()
+
+	// 准备参数
+	table := "student"
+	columns := []string{"name", "age", "gender"}
+	values := [][]interface{}{
+		{"李四12", 22, true},
+		{"李四22", 22, true},
+		{"李四33", 22, true},
+		{"李四44", 22, true},
+	}
+
+	// 执行添加
+	add, err := m.AddMany(table, columns, values)
+	if err != nil {
+		fmt.Println("执行添加失败：", err)
+		return
+	}
+	fmt.Println("插入数据成功：", add, err)
+
+}
+
 func TestMysql_UpdateById(t *testing.T) {
 	m := prepareMysql()
 
@@ -54,6 +80,19 @@ func TestMysql_UpdateById(t *testing.T) {
 	values := []interface{}{"李四111", 333}
 
 	update, err := m.UpdateById("student", columns, values, 1)
+	fmt.Println(update, err)
+	m.Close()
+}
+
+// 测试批量更新
+func TestMysql_UpdateByIds(t *testing.T) {
+	m := prepareMysql()
+
+	columns := []string{"name", "age"}
+	values := []interface{}{"李四111 是33岁", 33}
+	ids := []int64{10, 12, 13}
+
+	update, err := m.UpdateByIds("student", columns, values, ids)
 	fmt.Println(update, err)
 	m.Close()
 }
@@ -93,7 +132,7 @@ func TestMysql_FindByIdsToStruct(t *testing.T) {
 	m := prepareMysql()
 
 	var students []*Student
-	err := m.FindByIdsToStruct("student", []string{"id", "name", "age", "gender"}, []int{1, 2, 3}, &students)
+	err := m.FindByIdsToStruct("student", []string{"id", "name", "age", "gender"}, []int64{1, 2, 3}, &students)
 	fmt.Println(err)
 
 	for _, student := range students {
@@ -107,7 +146,7 @@ func TestMysql_FindByPagesToStruct(t *testing.T) {
 	m := prepareMysql()
 
 	var students []*Student
-	err := m.FindByPagesToStruct("student", []string{"id", "name", "age", "gender"}, 1, 20, &students)
+	err := m.FindByPageToStruct("student", []string{"id", "name", "age", "gender"}, 1, 20, &students)
 	fmt.Println(err)
 
 	for _, student := range students {

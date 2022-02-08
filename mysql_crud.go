@@ -10,6 +10,60 @@ import (
 	"strings"
 )
 
+// AddMany 批量添加数据
+func (m *Mysql) AddMany(table string, columns []string, values [][]interface{}) (affected int64, err error) {
+	// 处理异常
+	if columns == nil {
+		return 0, errors.New("columns字段列表不能为空")
+	}
+	if values == nil {
+		return 0, errors.New("values值列表不能为空")
+	}
+	if len(columns) != len(values[0]) {
+		return 0, errors.New("columns的长度和values子数组长度不相等，字段无法映射")
+	}
+
+	// 整理字段
+	columnStr := strings.Join(columns, ",")
+
+	// 整理占位符
+	var argsArr []string
+	var args []interface{}
+	for i := 0; i < len(values); i++ {
+		var valueArr []string
+		for j := 0; j < len(values[0]); j++ {
+			valueArr = append(valueArr, "?")
+			args = append(args, values[i][j])
+		}
+		valueStr := strings.Join(valueArr, ",")
+		tempStr := fmt.Sprintf("(%s)", valueStr)
+		argsArr = append(argsArr, tempStr)
+	}
+	argsStr := strings.Join(argsArr, ",")
+
+	// 整理SQL语句
+	s := fmt.Sprintf("INSERT INTO %s(%s) VALUES %s;", table, columnStr, argsStr)
+	m.log.Info("批量插入数据", "sql", s, "args", args)
+
+	// 执行SQL语句
+	ret := m.Execute(s, args...)
+
+	// 执行结果处理
+	affected, err = ret.RowsAffected()
+	if affected <= 0 {
+		m.log.Error("受影响的行数为0，批量插入数据失败")
+		err = errors.New("受影响的行数为0，批量插入数据失败")
+		return 0, err
+	}
+	if err != nil {
+		m.log.Error("AddMany 批量添加数据失败", "error", err.Error())
+		return 0, err
+	}
+
+	// 返回受影响的行数
+	return affected, nil
+}
+
 // Add 添加数据
 func (m *Mysql) Add(table string, columns []string, values []interface{}) (id int64, err error) {
 	// 处理异常
@@ -44,6 +98,7 @@ func (m *Mysql) Add(table string, columns []string, values []interface{}) (id in
 	// 返回添加的id
 	return addId, nil
 }
+
 func (m *Mysql) add(sql string, args ...interface{}) (id int64, err error) {
 	m.log.Info("Add 添加数据", "sql", sql, "args", args)
 
@@ -175,6 +230,57 @@ func (m *Mysql) UpdateById(table string, columns []string, values []interface{},
 	return update, nil
 }
 
+// UpdateByIds 根据ID列表修改数据
+func (m *Mysql) UpdateByIds(table string, columns []string, values []interface{}, ids []int64) (updated int64, err error) {
+	// 异常情况
+	if table == "" {
+		return 0, errors.New("table不能为空")
+	}
+	if columns == nil {
+		return 0, errors.New("columns不能为空")
+	}
+	if values == nil {
+		return 0, errors.New("values不能为空")
+	}
+	if len(columns) != len(values) {
+		return 0, errors.New("columns和values长度不一致，无法映射")
+	}
+	if ids == nil || len(ids) < 1 {
+		return 0, errors.New("ids不能为空")
+	}
+
+	// 整理要更新的数据
+	var data []string
+	var args []interface{}
+	for i := 0; i < len(columns); i++ {
+		v := fmt.Sprintf("%s=?", columns[i])
+		args = append(args, values[i])
+		data = append(data, v)
+	}
+	dataStr := strings.Join(data, ",")
+
+	// 整理条件
+	var idsArr []string
+	for i := 0; i < len(ids); i++ {
+		idsArr = append(idsArr, strconv.Itoa(int(ids[i])))
+	}
+	idsStr := strings.Join(idsArr, ",")
+
+	// 整理SQL语句
+	s := fmt.Sprintf("update %s set %s where id in (%s);", table, dataStr, idsStr)
+	m.log.Info("UpdateByIds 根据ID列表修改数据", "sql", s, "args", args)
+
+	// 执行更新
+	update, err := m.update(s, args...)
+	if err != nil {
+		m.log.Error("执行更新失败", "error", err.Error())
+		return 0, err
+	}
+
+	// 正常返回
+	return update, nil
+}
+
 func (m *Mysql) update(sql string, args ...interface{}) (updated int64, err error) {
 	m.log.Info("Update 根据ID修改数据", "sql", sql, "args", args)
 
@@ -221,10 +327,10 @@ func (m *Mysql) FindById(table string, columns []string, id int) (row *sql.Row, 
 }
 
 // FindByIdToStruct 根据id查询数据，并将结果转换为结构体
-func (m *Mysql) FindByIdToStruct(table string, columns []string, id int, objects interface{}) (err error) {
+func (m *Mysql) FindByIdToStruct(table string, columns []string, id int64, objects interface{}) (err error) {
 	// 处理字段
 	columnsStr := "*"
-	if columns != nil {
+	if columns != nil && len(columns) > 0 {
 		columnsStr = strings.Join(columns, ",")
 	}
 
@@ -267,7 +373,7 @@ func (m *Mysql) FindByIds(table string, columns []string, ids []int) (rows *sql.
 	}
 
 	// 执行SQL语句
-	s := fmt.Sprintf("SELECT %s FROM %s WHERE id IN (%s);",
+	s := fmt.Sprintf("SELECT %s FROM %s WHERE id IN (%s) ORDER BY ID DESC;",
 		columnsStr, table, idsStr)
 
 	// 执行查询
@@ -284,7 +390,7 @@ func (m *Mysql) FindByIds(table string, columns []string, ids []int) (rows *sql.
 }
 
 // FindByIdsToStruct 根据ID列表查询数据并映射到结构体
-func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int, objects interface{}) (err error) {
+func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int64, objects interface{}) (err error) {
 	// 参数校验
 	if ids == nil {
 		m.log.Error("ids不能为空")
@@ -294,19 +400,19 @@ func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int, obj
 	// 整理ID列表
 	var ids_ []string
 	for _, v := range ids {
-		vs := strconv.Itoa(v)
+		vs := strconv.Itoa(int(v))
 		ids_ = append(ids_, vs)
 	}
 	idsStr := strings.Join(ids_, ",")
 
 	// 整理字段列表
 	columnsStr := "*"
-	if columns != nil {
+	if columns != nil && len(columns) > 0 {
 		columnsStr = strings.Join(columns, ",")
 	}
 
 	// 执行SQL语句
-	s := fmt.Sprintf("SELECT %s FROM %s WHERE id IN (%s);",
+	s := fmt.Sprintf("SELECT %s FROM %s WHERE id IN (%s) ORDER BY ID DESC;",
 		columnsStr, table, idsStr)
 
 	// 结构体映射
@@ -346,11 +452,11 @@ func (m *Mysql) FindPages(table string, columns []string, page, size int) (rows 
 	return rows, nil
 }
 
-// FindByPagesToStruct 执行分页查询并映射到结构体
-func (m *Mysql) FindByPagesToStruct(table string, columns []string, page, size int, objects interface{}) (err error) {
+// FindByPageToStruct 执行分页查询并映射到结构体
+func (m *Mysql) FindByPageToStruct(table string, columns []string, page, size int, objects interface{}) (err error) {
 	// 整理字段列表
 	columnsStr := "*"
-	if columns != nil {
+	if columns != nil && len(columns) > 0 {
 		columnsStr = strings.Join(columns, ",")
 	}
 
