@@ -1,14 +1,13 @@
 package zdpgo_mysql
 
 import (
-	"fmt"
 	"testing"
 )
 
 func prepareMysql() *Mysql {
 	m := New(MysqlConfig{
 		Debug:    true,
-		Host:     "192.168.33.101",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
 		Password: "root",
@@ -19,5 +18,5 @@ func prepareMysql() *Mysql {
 
 func TestMysql_New(t *testing.T) {
 	m := prepareMysql()
-	fmt.Println(m)
+	t.Log(m)
 }

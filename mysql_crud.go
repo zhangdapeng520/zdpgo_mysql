@@ -427,17 +427,17 @@ func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int64, o
 	return nil
 }
 
-// FindPages 分页查询数据
-func (m *Mysql) FindPages(table string, columns []string, page, size int) (rows *sql.Rows, err error) {
+// FindByPage 分页查询数据
+func (m *Mysql) FindByPage(table string, columns []string, page, size int) (rows *sql.Rows, err error) {
 	// 整理字段列表
 	columnsStr := "*"
-	if columns != nil {
+	if columns != nil && len(columns) > 0 {
 		columnsStr = strings.Join(columns, ",")
 	}
 
 	// 计算偏移量
 	offset := (page - 1) * size
-	s := fmt.Sprintf("SELECT %s FROM %s ORDER BY id DESC LIMIT %d,%d;", columnsStr, table, offset, size)
+	s := fmt.Sprintf("SELECT %s FROM %s LIMIT %d,%d;", columnsStr, table, offset, size)
 
 	// 执行查询
 	rows, err = m.db.Query(s)
@@ -462,7 +462,7 @@ func (m *Mysql) FindByPageToStruct(table string, columns []string, page, size in
 
 	// 计算偏移量
 	offset := (page - 1) * size
-	s := fmt.Sprintf("SELECT %s FROM %s ORDER BY id DESC LIMIT %d,%d;", columnsStr, table, offset, size)
+	s := fmt.Sprintf("SELECT %s FROM %s LIMIT %d,%d;", columnsStr, table, offset, size)
 
 	// 结构体映射
 	ctx := context.Background()

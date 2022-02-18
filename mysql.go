@@ -8,9 +8,10 @@ import (
 	"github.com/zhangdapeng520/zdpgo_zap"
 )
 
+// Mysql 操作MySQL核心对象
 type Mysql struct {
-	log *zdpgo_zap.Zap
-	db  *sql.DB
+	log *zdpgo_zap.Zap // 日志核心对象
+	db  *sql.DB        // db核心对象
 }
 
 // MysqlConfig MySQL配置信息
@@ -32,7 +33,7 @@ func New(config MysqlConfig) *Mysql {
 
 	// 初始化日志
 	if config.LogFilePath == "" {
-		config.LogFilePath = "zdpgo_mysql.log"
+		config.LogFilePath = "logs/zdpgo/zdpgo_mysql.log"
 	}
 	m.log = zdpgo_zap.New(zdpgo_zap.ZapConfig{
 		Debug:        config.Debug,
