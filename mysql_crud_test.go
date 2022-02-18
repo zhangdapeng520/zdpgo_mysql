@@ -20,7 +20,7 @@ func TestCreateTable(t *testing.T) {
 	var s string // sql 语句
 
 	// 删除表
-	s = "drop table student;"
+	s = "drop table if exists student;"
 	m.Execute(s)
 
 	// 创建表

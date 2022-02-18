@@ -12,6 +12,7 @@ import (
 type Mysql struct {
 	log *zdpgo_zap.Zap // 日志核心对象
 	db  *sql.DB        // db核心对象
+	tx  *sql.Tx        // 事务对象
 }
 
 // MysqlConfig MySQL配置信息
@@ -79,6 +80,12 @@ func (m *Mysql) Execute(sql string, args ...interface{}) sql.Result {
 
 	// 预处理SQL
 	stmt, err := m.db.Prepare(sql)
+
+	// 如果存在事务，则使用事务
+	if m.tx != nil {
+		stmt, err = m.tx.Prepare(sql)
+	}
+
 	if err != nil {
 		m.log.Error("Prepare SQL语句失败", "error", err.Error())
 		return nil
@@ -89,6 +96,11 @@ func (m *Mysql) Execute(sql string, args ...interface{}) sql.Result {
 	ret, err := stmt.Exec(args...)
 	if err != nil {
 		m.log.Error("执行SQL语句失败", "error", err)
+
+		// 如果事务不为空，需要回滚事务
+		if m.tx != nil {
+			_ = m.Rollback()
+		}
 		return nil
 	}
 	return ret
