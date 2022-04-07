@@ -1,10 +1,10 @@
-package zdpgo_mysql
+package mysql
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/zhangdapeng520/zdpgo_mysql/libs/mysql_driver"
 )
 
 // Mysql 操作MySQL核心对象

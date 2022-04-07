@@ -1,4 +1,4 @@
-package zdpgo_mysql
+package mysql
 
 import (
 	"fmt"
@@ -85,10 +85,9 @@ func TestMysql_AddMany(t *testing.T) {
 	// 执行添加
 	add, err := m.AddMany(table, columns, values)
 	if err != nil {
-		t.Error("执行添加失败：", err)
-		return
+		t.Error(err)
 	}
-	t.Log("插入数据成功：", add, err)
+	t.Log(add)
 
 }
 

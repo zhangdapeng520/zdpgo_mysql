@@ -1,4 +1,4 @@
-package zdpgo_mysql
+package mysql
 
 import "errors"
 

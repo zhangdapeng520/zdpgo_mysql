@@ -4,8 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/zhangdapeng520/zdpgo_mysql/libs/dbscan"
-
-	"github.com/pkg/errors"
+	"github.com/zhangdapeng520/zdpgo_mysql/libs/errors"
 )
 
 // Querier is something that sqlscan can query and get the *sql.Rows from.

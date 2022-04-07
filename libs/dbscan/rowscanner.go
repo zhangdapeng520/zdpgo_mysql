@@ -3,7 +3,7 @@ package dbscan
 import (
 	"reflect"
 
-	"github.com/pkg/errors"
+	"github.com/zhangdapeng520/zdpgo_mysql/libs/errors"
 )
 
 type startScannerFunc func(rs *RowScanner, dstValue reflect.Value) error
