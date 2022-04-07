@@ -3,7 +3,7 @@ package sqlscan
 import (
 	"context"
 	"database/sql"
-	"github.com/zhangdapeng520/zdpgo_mysql/dbscan"
+	"github.com/zhangdapeng520/zdpgo_mysql/libs/dbscan"
 
 	"github.com/pkg/errors"
 )

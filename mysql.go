@@ -5,14 +5,12 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/zhangdapeng520/zdpgo_zap"
 )
 
 // Mysql 操作MySQL核心对象
 type Mysql struct {
-	log *zdpgo_zap.Zap // 日志核心对象
-	db  *sql.DB        // db核心对象
-	tx  *sql.Tx        // 事务对象
+	db *sql.DB // db核心对象
+	tx *sql.Tx // 事务对象
 }
 
 // MysqlConfig MySQL配置信息
@@ -36,18 +34,11 @@ func New(config MysqlConfig) *Mysql {
 	if config.LogFilePath == "" {
 		config.LogFilePath = "logs/zdpgo/zdpgo_mysql.log"
 	}
-	m.log = zdpgo_zap.New(zdpgo_zap.ZapConfig{
-		Debug:        config.Debug,
-		OpenGlobal:   false,
-		OpenFileName: false,
-		LogFilePath:  config.LogFilePath,
-	})
-
 	// 初始化连接
 	address := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", config.Username, config.Password, config.Host, config.Port, config.Database)
 	db, err := sql.Open("mysql", address)
 	if err != nil {
-		m.log.Error("连接MySQL数据库失败", "error", err.Error())
+		panic(err)
 	}
 	m.db = db
 
@@ -68,16 +59,11 @@ func New(config MysqlConfig) *Mysql {
 // Close 关闭数据库连接
 func (m *Mysql) Close() error {
 	err := m.db.Close()
-	if err != nil {
-		m.log.Error("关闭MySQL数据库连接失败", "error", err.Error())
-	}
 	return err
 }
 
 // Execute 执行SQL语句
 func (m *Mysql) Execute(sql string, args ...interface{}) sql.Result {
-	m.log.Info("执行SQL语句", "sql", sql, "args", args)
-
 	// 预处理SQL
 	stmt, err := m.db.Prepare(sql)
 
@@ -87,7 +73,6 @@ func (m *Mysql) Execute(sql string, args ...interface{}) sql.Result {
 	}
 
 	if err != nil {
-		m.log.Error("Prepare SQL语句失败", "error", err.Error())
 		return nil
 	}
 	defer stmt.Close()
@@ -95,8 +80,6 @@ func (m *Mysql) Execute(sql string, args ...interface{}) sql.Result {
 	// 执行SQL语句
 	ret, err := stmt.Exec(args...)
 	if err != nil {
-		m.log.Error("执行SQL语句失败", "error", err)
-
 		// 如果事务不为空，需要回滚事务
 		if m.tx != nil {
 			_ = m.Rollback()
@@ -114,18 +97,14 @@ func (m *Mysql) DeleteTable(table string) {
 
 // QueryRow 查询单条数据
 func (m *Mysql) QueryRow(sql string, args ...interface{}) (row *sql.Row, err error) {
-	m.log.Info("QueryRow 查询单条数据", "sql", sql, "args", args)
-
 	// 预处理SQL语句
 	stmt, err := m.db.Prepare(sql)
 
 	// 处理错误
 	if err != nil {
-		m.log.Error("Prepare SQL语句失败", "error", err)
 		return nil, err
 	}
 	if stmt == nil {
-		m.log.Error("stml为nil，预处理语句失败")
 		err = errors.New("stml为nil，预处理语句失败")
 		return nil, err
 	}
@@ -140,7 +119,6 @@ func (m *Mysql) QueryRow(sql string, args ...interface{}) (row *sql.Row, err err
 	// 关闭预处理对象
 	err = stmt.Close()
 	if err != nil {
-		m.log.Error("关闭预处理对象失败", "error", err.Error())
 		return nil, err
 	}
 
@@ -150,10 +128,8 @@ func (m *Mysql) QueryRow(sql string, args ...interface{}) (row *sql.Row, err err
 
 // Query 查询多条数据
 func (m *Mysql) Query(sql string, args ...interface{}) (*sql.Rows, error) {
-	m.log.Info("Query 查询多条数据", "sql", sql, "args", args)
 	stmt, err := m.db.Prepare(sql)
 	if err != nil {
-		m.log.Error("Prepare SQL语句失败", "error", err)
 		return nil, err
 	}
 	defer stmt.Close()
@@ -179,7 +155,6 @@ func (m *Mysql) TransRowsToMaps(rows *sql.Rows) (list []map[string]interface{}, 
 	for rows.Next() {
 		err = rows.Scan(cache...)
 		if err != nil {
-			m.log.Error("rows.Scan 转换数据失败", "error", err.Error())
 			return nil, err
 		}
 		item := make(map[string]interface{})
@@ -192,7 +167,6 @@ func (m *Mysql) TransRowsToMaps(rows *sql.Rows) (list []map[string]interface{}, 
 	// 关闭rows
 	err = rows.Close()
 	if err != nil {
-		m.log.Error("rows.Close 关闭rows失败", "error", err.Error())
 		return nil, err
 	}
 	return list, nil

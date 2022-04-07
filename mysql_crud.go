@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/zhangdapeng520/zdpgo_mysql/sqlscan"
+	"github.com/zhangdapeng520/zdpgo_mysql/libs/sqlscan"
 	"strconv"
 	"strings"
 )
@@ -43,7 +43,6 @@ func (m *Mysql) AddMany(table string, columns []string, values [][]interface{}) 
 
 	// 整理SQL语句
 	s := fmt.Sprintf("INSERT INTO %s(%s) VALUES %s;", table, columnStr, argsStr)
-	m.log.Info("批量插入数据", "sql", s, "args", args)
 
 	// 执行SQL语句
 	ret := m.Execute(s, args...)
@@ -51,12 +50,10 @@ func (m *Mysql) AddMany(table string, columns []string, values [][]interface{}) 
 	// 执行结果处理
 	affected, err = ret.RowsAffected()
 	if affected <= 0 {
-		m.log.Error("受影响的行数为0，批量插入数据失败")
 		err = errors.New("受影响的行数为0，批量插入数据失败")
 		return 0, err
 	}
 	if err != nil {
-		m.log.Error("AddMany 批量添加数据失败", "error", err.Error())
 		return 0, err
 	}
 
@@ -93,27 +90,22 @@ func (m *Mysql) Add(table string, columns []string, values []interface{}) (id in
 	if err != nil {
 		return 0, err
 	}
-	m.log.Info("插入数据成功", "addId", addId)
 
 	// 返回添加的id
 	return addId, nil
 }
 
 func (m *Mysql) add(sql string, args ...interface{}) (id int64, err error) {
-	m.log.Info("Add 添加数据", "sql", sql, "args", args)
-
 	// 执行SQL语句
 	ret := m.Execute(sql, args...)
 
 	// 执行结果处理
 	affected, err := ret.RowsAffected()
 	if affected <= 0 {
-		m.log.Error("受影响的行数为0，插入数据失败")
 		err = errors.New("受影响的行数为0，插入数据失败")
 		return 0, err
 	}
 	if err != nil {
-		m.log.Error("Add 添加数据失败", "error", err.Error())
 		return 0, err
 	}
 
@@ -122,7 +114,6 @@ func (m *Mysql) add(sql string, args ...interface{}) (id int64, err error) {
 
 	// 处理错误
 	if err != nil {
-		m.log.Error("获取新插入的数据ID失败", "error", err)
 		return 0, err
 	}
 
@@ -134,7 +125,6 @@ func (m *Mysql) add(sql string, args ...interface{}) (id int64, err error) {
 func (m *Mysql) DeleteById(table string, id int64) (deleted int64, err error) {
 	// 整理SQL语句
 	s := fmt.Sprintf("DELETE FROM %s WHERE id = %d;", table, id)
-	m.log.Info("Delete 根据ID删除数据", "table", table, "id", id, "sql", s)
 
 	// 执行SQL语句
 	ret := m.Execute(s)
@@ -142,7 +132,6 @@ func (m *Mysql) DeleteById(table string, id int64) (deleted int64, err error) {
 	// 处理执行结果
 	rows, err := ret.RowsAffected()
 	if err != nil {
-		m.log.Error("获取受影响的行数失败", "error", err)
 		return 0, err
 	}
 	if rows <= 0 {
@@ -167,7 +156,6 @@ func (m *Mysql) DeleteByIds(table string, ids ...int64) (deleted int64, err erro
 	// 整理SQL语句
 	s := fmt.Sprintf("DELETE FROM %s WHERE id IN (%s);",
 		table, idsStr)
-	m.log.Info("根据ID列表删除", "sql", s)
 
 	// 执行SQL语句
 	ret := m.Execute(s)
@@ -175,11 +163,9 @@ func (m *Mysql) DeleteByIds(table string, ids ...int64) (deleted int64, err erro
 	// 处理执行结果
 	rows, err := ret.RowsAffected()
 	if err != nil {
-		m.log.Error("获取受影响的行数失败", "error", err)
 		return 0, err
 	}
 	if rows <= 0 {
-		m.log.Error("受影响的行数为0，根据ID列表删除失败")
 		err = errors.New("受影响的行数为0，根据ID列表删除失败")
 		return 0, err
 	}
@@ -217,12 +203,10 @@ func (m *Mysql) UpdateById(table string, columns []string, values []interface{},
 
 	// 整理SQL语句
 	s := fmt.Sprintf("update %s set %s where id=?;", table, dataStr)
-	m.log.Info("UpdateById 根据ID修改数据", "sql", s, "args", args)
 
 	// 执行更新
 	update, err := m.update(s, args...)
 	if err != nil {
-		m.log.Error("执行更新失败", "error", err.Error())
 		return 0, err
 	}
 
@@ -268,12 +252,10 @@ func (m *Mysql) UpdateByIds(table string, columns []string, values []interface{}
 
 	// 整理SQL语句
 	s := fmt.Sprintf("update %s set %s where id in (%s);", table, dataStr, idsStr)
-	m.log.Info("UpdateByIds 根据ID列表修改数据", "sql", s, "args", args)
 
 	// 执行更新
 	update, err := m.update(s, args...)
 	if err != nil {
-		m.log.Error("执行更新失败", "error", err.Error())
 		return 0, err
 	}
 
@@ -282,19 +264,15 @@ func (m *Mysql) UpdateByIds(table string, columns []string, values []interface{}
 }
 
 func (m *Mysql) update(sql string, args ...interface{}) (updated int64, err error) {
-	m.log.Info("Update 根据ID修改数据", "sql", sql, "args", args)
-
 	// 执行SQL语句
 	ret := m.Execute(sql, args...)
 
 	// 处理执行结果
 	rows, err := ret.RowsAffected()
 	if err != nil {
-		m.log.Error("获取受影响的行数失败", "error", err)
 		return 0, err
 	}
 	if rows <= 0 {
-		m.log.Error("受影响的行数为0，更新数据失败")
 		err = errors.New("受影响的行数为0，更新数据失败")
 		return 0, err
 	}
@@ -313,12 +291,10 @@ func (m *Mysql) FindById(table string, columns []string, id int) (row *sql.Row, 
 
 	// 整理SQL语句
 	s := fmt.Sprintf("SELECT %s FROM %s WHERE id = ?;", columnsStr, table)
-	m.log.Info("FindById 查询单条数据", "sql", s)
 
 	// 执行SQL语句
 	row, err = m.QueryRow(s, id)
 	if err != nil {
-		m.log.Error("QueryRow 执行查询失败", "error", err.Error())
 		return nil, err
 	}
 
@@ -336,13 +312,11 @@ func (m *Mysql) FindByIdToStruct(table string, columns []string, id int64, objec
 
 	// 整理SQL语句
 	s := fmt.Sprintf("SELECT %s FROM %s WHERE id = ?;", columnsStr, table)
-	m.log.Info("FindById 查询单条数据", "sql", s)
 
 	// 结构体映射
 	ctx := context.Background()
 	err = sqlscan.Select(ctx, m.db, objects, s, id)
 	if err != nil {
-		m.log.Error("执行查询并映射数据失败", "error", err.Error())
 		return err
 	}
 
@@ -354,7 +328,6 @@ func (m *Mysql) FindByIdToStruct(table string, columns []string, id int64, objec
 func (m *Mysql) FindByIds(table string, columns []string, ids []int) (rows *sql.Rows, err error) {
 	// 参数校验
 	if ids == nil {
-		m.log.Error("ids不能为空")
 		return nil, errors.New("ids不能为空")
 	}
 
@@ -381,7 +354,6 @@ func (m *Mysql) FindByIds(table string, columns []string, ids []int) (rows *sql.
 
 	// 处理查询错误
 	if err != nil {
-		m.log.Error("Query 查询数据失败", "error", err)
 		return nil, err
 	}
 
@@ -393,7 +365,6 @@ func (m *Mysql) FindByIds(table string, columns []string, ids []int) (rows *sql.
 func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int64, objects interface{}) (err error) {
 	// 参数校验
 	if ids == nil {
-		m.log.Error("ids不能为空")
 		return errors.New("ids不能为空")
 	}
 
@@ -419,7 +390,6 @@ func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int64, o
 	ctx := context.Background()
 	err = sqlscan.Select(ctx, m.db, objects, s)
 	if err != nil {
-		m.log.Error("执行查询并映射数据失败", "error", err.Error())
 		return err
 	}
 
@@ -444,7 +414,6 @@ func (m *Mysql) FindByPage(table string, columns []string, page, size int) (rows
 
 	// 处理查询错误
 	if err != nil {
-		m.log.Error("Query 查询多条数据失败", "error", err)
 		return nil, err
 	}
 
@@ -468,7 +437,6 @@ func (m *Mysql) FindByPageToStruct(table string, columns []string, page, size in
 	ctx := context.Background()
 	err = sqlscan.Select(ctx, m.db, objects, s)
 	if err != nil {
-		m.log.Error("执行查询并映射数据失败", "error", err.Error())
 		return err
 	}
 

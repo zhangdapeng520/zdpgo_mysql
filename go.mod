@@ -1,6 +1,6 @@
 module github.com/zhangdapeng520/zdpgo_mysql
 
-go 1.16
+go 1.17
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.2.0
