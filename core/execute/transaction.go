@@ -1,16 +1,16 @@
-package mysql
+package execute
 
 import "errors"
 
 // Begin 开始事务
-func (m *Mysql) Begin() error {
-	tx, err := m.db.Begin()
+func (m *Execute) Begin() error {
+	tx, err := m.Db.Begin()
 	m.tx = tx
 	return err
 }
 
 // Rollback 回滚事务
-func (m *Mysql) Rollback() error {
+func (m *Execute) Rollback() error {
 	// 事务不存在
 	var msg string
 	if m.tx == nil {
@@ -24,7 +24,7 @@ func (m *Mysql) Rollback() error {
 }
 
 // Commit 提交事务
-func (m *Mysql) Commit() error {
+func (m *Execute) Commit() error {
 	// 事务不存在
 	var msg string
 	if m.tx == nil {

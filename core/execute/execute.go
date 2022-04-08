@@ -9,6 +9,7 @@ import (
 
 type Execute struct {
 	Db *sql.DB // db核心对象
+	tx *sql.Tx // 事务对象
 }
 
 func NewExecute(username, password, host string, port int, database string) *Execute {

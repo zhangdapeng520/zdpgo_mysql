@@ -1,0 +1,104 @@
+package query
+
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+	_ "github.com/zhangdapeng520/zdpgo_mysql/libs/mysql_driver"
+)
+
+type Query struct {
+	Db *sql.DB // db核心对象
+}
+
+func NewQuery(username, password, host string, port int, database string) *Query {
+	t := Query{}
+
+	// 初始化DB
+	address := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", username, password, host, port, database)
+	db, err := sql.Open("mysql", address)
+	if err != nil {
+		panic(err)
+	}
+	t.Db = db
+
+	// 返回表格处理对象
+	return &t
+}
+
+// QueryRow 查询单条数据
+func (m *Query) QueryRow(sql string, args ...interface{}) (row *sql.Row, err error) {
+	// 预处理SQL语句
+	stmt, err := m.Db.Prepare(sql)
+
+	// 处理错误
+	if err != nil {
+		return nil, err
+	}
+	if stmt == nil {
+		err = errors.New("stml为nil，预处理语句失败")
+		return nil, err
+	}
+
+	// 执行查询
+	if args != nil {
+		row = stmt.QueryRow(args...)
+	} else {
+		row = stmt.QueryRow()
+	}
+
+	// 关闭预处理对象
+	err = stmt.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// 正常返回
+	return row, nil
+}
+
+// Query 查询多条数据
+func (m *Query) Query(sql string, args ...interface{}) (*sql.Rows, error) {
+	stmt, err := m.Db.Prepare(sql)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(args...)
+	return rows, err
+}
+
+// TransRowsToMaps 将rows转换为map
+func (m *Query) TransRowsToMaps(rows *sql.Rows) (list []map[string]interface{}, err error) {
+	// 获取字段列表
+	columns, _ := rows.Columns()
+	columnLength := len(columns)
+
+	// 临时存储每行数据
+	cache := make([]interface{}, columnLength)
+	for index, _ := range cache { //为每一列初始化一个指针
+		var a interface{}
+		cache[index] = &a
+	}
+
+	// 转换数据
+	for rows.Next() {
+		err = rows.Scan(cache...)
+		if err != nil {
+			return nil, err
+		}
+		item := make(map[string]interface{})
+		for i, data := range cache {
+			item[columns[i]] = *data.(*interface{}) //取实际类型
+		}
+		list = append(list, item)
+	}
+
+	// 关闭rows
+	err = rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
