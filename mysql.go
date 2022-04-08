@@ -1,13 +1,15 @@
 package zdpgo_mysql
 
 import (
+	"github.com/zhangdapeng520/zdpgo_mysql/core/execute"
 	"github.com/zhangdapeng520/zdpgo_mysql/core/mysql"
 	"github.com/zhangdapeng520/zdpgo_mysql/core/table"
 )
 
 type Mysql struct {
-	Db    *mysql.Mysql // 操作MySQL数据库的核心对象
-	Table *table.Table // 操作表格的核心对象
+	Db      *mysql.Mysql     // 操作MySQL数据库的核心对象
+	Table   *table.Table     // 操作表格的核心对象
+	Execute *execute.Execute // 执行增删改语句的核心对象
 }
 
 func New(config Config) *Mysql {
@@ -31,6 +33,12 @@ func New(config Config) *Mysql {
 		config.Port,
 		config.Database,
 	)
-
+	m.Execute = execute.NewExecute(
+		config.Username,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Database,
+	)
 	return &m
 }

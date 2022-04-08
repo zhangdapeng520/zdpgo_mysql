@@ -84,6 +84,59 @@ func TestMysql_Table(t *testing.T) {
 	// 删除表
 	m.Table.Delete("student")
 }
+func TestMysql_Execute(t *testing.T) {
+	m := prepareMysql()
+
+	// 创建表
+	m.Table.Add(studentSql)
+
+	// 添加单条数据
+	add, err := m.Execute.Add(tableName, columns, values)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(add)
+
+	// 添加多条数据
+	many, err := m.Execute.AddMany(tableName, columns, studentData)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(many)
+
+	// 修改单条数据
+	values = []interface{}{"李四111-修改", 22, true}
+	id, err := m.Execute.UpdateById(tableName, columns, values, 1)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(id)
+
+	// 修改多条数据
+	var ids = []int64{1, 2, 3, 4}
+	byIds, err := m.Execute.UpdateByIds(tableName, columns, values, ids)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(byIds)
+
+	// 删除单条
+	byId, err := m.Execute.DeleteById(tableName, 1)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(byId)
+
+	// 删除多条
+	deleteByIds, err := m.Execute.DeleteByIds(tableName, 1, 2, 3, 4)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(deleteByIds)
+
+	// 删除表
+	m.Table.Delete("student")
+}
 
 // 测试添加数据
 func TestMysql_Add(t *testing.T) {
