@@ -27,15 +27,11 @@ type MysqlConfig struct {
 }
 
 // New 创建mysql实例
-func New(config MysqlConfig) *Mysql {
+func New(username, password, host string, port int, database string, maxConnectNum, maxFreeConnectNum int) *Mysql {
 	m := Mysql{}
 
-	// 初始化日志
-	if config.LogFilePath == "" {
-		config.LogFilePath = "logs/zdpgo/zdpgo_mysql.log"
-	}
 	// 初始化连接
-	address := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", config.Username, config.Password, config.Host, config.Port, config.Database)
+	address := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", username, password, host, port, database)
 	db, err := sql.Open("mysql", address)
 	if err != nil {
 		panic(err)
@@ -43,16 +39,10 @@ func New(config MysqlConfig) *Mysql {
 	m.db = db
 
 	// 设置最大连接数和最大闲置连接数
-	if config.MaxConnectNum == 0 {
-		config.MaxConnectNum = 100
-	}
-	m.db.SetMaxOpenConns(config.MaxConnectNum)
+	m.db.SetMaxOpenConns(maxConnectNum)
+	m.db.SetMaxIdleConns(maxFreeConnectNum)
 
-	if config.MaxFreeConnectNum == 0 {
-		config.MaxFreeConnectNum = 10
-	}
-	m.db.SetMaxIdleConns(config.MaxFreeConnectNum)
-
+	// 返回实例
 	return &m
 }
 
@@ -87,12 +77,6 @@ func (m *Mysql) Execute(sql string, args ...interface{}) sql.Result {
 		return nil
 	}
 	return ret
-}
-
-// DeleteTable 删除表格
-func (m *Mysql) DeleteTable(table string) {
-	s := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
-	m.Execute(s)
 }
 
 // QueryRow 查询单条数据
