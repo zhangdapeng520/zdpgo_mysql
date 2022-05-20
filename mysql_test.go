@@ -48,9 +48,9 @@ var (
 	}
 )
 
-func prepareMysql() *Mysql {
-	m := New(Config{
-		Host:     "127.0.0.1",
+func getMysql() *Mysql {
+	m := New(&Config{
+		Host:     "ubuntu20_server",
 		Port:     3306,
 		Username: "root",
 		Password: "root",
@@ -68,7 +68,7 @@ type Student struct {
 
 // 测试创建表格
 func TestMysql_Table(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
@@ -85,7 +85,7 @@ func TestMysql_Table(t *testing.T) {
 }
 
 func TestMysql_Execute(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
@@ -139,7 +139,7 @@ func TestMysql_Execute(t *testing.T) {
 }
 
 func TestMysql_FindById(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
@@ -173,7 +173,7 @@ func TestMysql_FindById(t *testing.T) {
 }
 
 func TestMysql_FindByIdToStruct(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
@@ -204,7 +204,7 @@ func TestMysql_FindByIdToStruct(t *testing.T) {
 }
 
 func TestMysql_FindByIdsToStruct(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
@@ -233,7 +233,7 @@ func TestMysql_FindByIdsToStruct(t *testing.T) {
 }
 
 func TestMysql_FindByPagesToStruct(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
@@ -261,7 +261,7 @@ func TestMysql_FindByPagesToStruct(t *testing.T) {
 }
 
 func TestFindIds(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
@@ -298,7 +298,7 @@ func TestFindIds(t *testing.T) {
 }
 
 func TestMysql_FindByPage(t *testing.T) {
-	m := prepareMysql()
+	m := getMysql()
 
 	// 创建表
 	m.Table.Add(studentSql)
