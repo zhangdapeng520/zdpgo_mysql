@@ -3,7 +3,6 @@ package zdpgo_mysql
 import (
 	"database/sql"
 	"fmt"
-	"time"
 )
 
 /*
@@ -17,27 +16,24 @@ import (
 // IsHealth 判断MySQL是否可用
 func (m *Mysql) IsHealth() bool {
 	// 准备连接地址
-	address := fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s",
-		m.Config.Username,
-		m.Config.Password,
-		m.Config.Host,
-		m.Config.Port,
-		m.Config.Database)
+	if m.Address == "" {
+		m.Address = fmt.Sprintf(
+			"%s:%s@tcp(%s:%d)/%s",
+			m.Config.Username,
+			m.Config.Password,
+			m.Config.Host,
+			m.Config.Port,
+			m.Config.Database)
+	}
 
 	// 连接
 	var err error
-	for i := 0; i < 3; i++ {
-		m.Db, err = sql.Open("mysql", address)
-		if err == nil {
-			break // 连接成功
-		}
-		time.Sleep(time.Second * 3)
-	}
+	m.Log.Debug("正常尝试连接MySQL服务器", "address", m.Address)
+	m.Db, err = sql.Open("mysql", m.Address)
 	if err != nil {
-		m.Log.Error("连接数据库失败", "error", err)
+		m.Log.Error("连接MySQL数据库服务器失败", "error", err, "address", m.Address)
 		return false
 	}
-
+	m.Log.Debug("连接MySQL服务器成功")
 	return true
 }
