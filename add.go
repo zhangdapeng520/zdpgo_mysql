@@ -18,9 +18,6 @@ import (
 // AddTable 增加表格
 func (m *Mysql) AddTable(sql string) error {
 	_, err := m.Execute(sql)
-	if err != nil {
-		m.Log.Error("添加新的表格失败", "error", err)
-	}
 	return err
 }
 
@@ -54,7 +51,6 @@ func (m *Mysql) Add(table string, columns []string, values []interface{}) (id in
 	// 执行添加
 	addId, err := m.add(s, values...)
 	if err != nil {
-		m.Log.Error("添加数据失败", "error", err)
 		return
 	}
 
@@ -70,7 +66,6 @@ func (m *Mysql) add(sqlStr string, args ...interface{}) (uid int64, err error) {
 	// 执行SQL语句
 	ret, err = m.Execute(sqlStr, args...)
 	if err != nil {
-		m.Log.Error("执行SQL语句失败", "error", err, "sql", sqlStr, "args", args)
 		return
 	}
 
@@ -78,12 +73,10 @@ func (m *Mysql) add(sqlStr string, args ...interface{}) (uid int64, err error) {
 	affected, err := ret.RowsAffected()
 	if affected <= 0 {
 		msg := "受影响的行数为0，插入数据失败"
-		m.Log.Error(msg)
 		err = errors.New(msg)
 		return
 	}
 	if err != nil {
-		m.Log.Error("获取受影响的行数失败", "error", err)
 		return
 	}
 
@@ -92,7 +85,6 @@ func (m *Mysql) add(sqlStr string, args ...interface{}) (uid int64, err error) {
 
 	// 处理错误
 	if err != nil {
-		m.Log.Error("获取新插入数据的ID失败", "error", err)
 		return
 	}
 
@@ -105,17 +97,14 @@ func (m *Mysql) AddMany(table string, columns []string, values [][]interface{}) 
 	// 处理异常
 	if columns == nil {
 		err = errors.New("columns字段列表不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if values == nil {
 		err = errors.New("values值列表不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if len(columns) != len(values[0]) {
 		err = errors.New("columns的长度和values子数组长度不相等，字段无法映射")
-		m.Log.Error(err.Error())
 		return
 	}
 
@@ -143,7 +132,6 @@ func (m *Mysql) AddMany(table string, columns []string, values [][]interface{}) 
 	// 执行SQL语句
 	ret, err := m.Execute(s, args...)
 	if err != nil {
-		m.Log.Error("执行SQL语句失败", "error", err, "sql", s)
 		return
 	}
 
@@ -151,11 +139,9 @@ func (m *Mysql) AddMany(table string, columns []string, values [][]interface{}) 
 	affected, err = ret.RowsAffected()
 	if affected <= 0 {
 		err = errors.New("受影响的行数为0，批量插入数据失败")
-		m.Log.Error(err.Error())
 		return
 	}
 	if err != nil {
-		m.Log.Error("获取受影响的行数失败", "error", err)
 		return
 	}
 

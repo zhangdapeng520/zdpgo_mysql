@@ -28,12 +28,9 @@ func (m *Mysql) IsHealth() bool {
 
 	// 连接
 	var err error
-	m.Log.Debug("正常尝试连接MySQL服务器", "address", m.Address)
 	m.Db, err = sql.Open("mysql", m.Address)
 	if err != nil {
-		m.Log.Error("连接MySQL数据库服务器失败", "error", err, "address", m.Address)
 		return false
 	}
-	m.Log.Debug("连接MySQL服务器成功")
 	return true
 }

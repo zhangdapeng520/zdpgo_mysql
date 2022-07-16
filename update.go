@@ -20,22 +20,18 @@ func (m *Mysql) UpdateById(table string, columns []string, values []interface{},
 	// 异常情况
 	if table == "" {
 		err = errors.New("table不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if columns == nil {
 		err = errors.New("columns不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if values == nil {
 		err = errors.New("values不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if len(columns) != len(values) {
 		err = errors.New("columns和values长度不一致，无法映射")
-		m.Log.Error(err.Error())
 		return
 	}
 
@@ -56,7 +52,6 @@ func (m *Mysql) UpdateById(table string, columns []string, values []interface{},
 	// 执行更新
 	updated, err = m.update(s, args...)
 	if err != nil {
-		m.Log.Error("更新数据失败", "error", err, "sql", s)
 		return
 	}
 
@@ -69,27 +64,22 @@ func (m *Mysql) UpdateByIds(table string, columns []string, values []interface{}
 	// 异常情况
 	if table == "" {
 		err = errors.New("table不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if columns == nil {
 		err = errors.New("columns不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if values == nil {
 		err = errors.New("values不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 	if len(columns) != len(values) {
 		err = errors.New("columns和values长度不一致，无法映射")
-		m.Log.Error(err.Error())
 		return
 	}
 	if ids == nil || len(ids) < 1 {
 		err = errors.New("ids不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 
@@ -116,7 +106,6 @@ func (m *Mysql) UpdateByIds(table string, columns []string, values []interface{}
 	// 执行更新
 	updated, err = m.update(s, args...)
 	if err != nil {
-		m.Log.Error("批量更新数据失败", "error", err, "sql", s)
 		return
 	}
 
@@ -128,7 +117,6 @@ func (m *Mysql) update(sql string, args ...interface{}) (updated int64, err erro
 	// 执行SQL语句
 	ret, err := m.Execute(sql, args...)
 	if err != nil {
-		m.Log.Error("执行SQL语句失败", "error", err, "sql", sql, "args", args)
 		return
 	}
 
@@ -139,7 +127,6 @@ func (m *Mysql) update(sql string, args ...interface{}) (updated int64, err erro
 	}
 	if updated <= 0 {
 		err = errors.New("受影响的行数为0，更新数据失败")
-		m.Log.Error(err.Error())
 		return
 	}
 

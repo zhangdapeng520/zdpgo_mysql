@@ -17,8 +17,7 @@ import (
 
 func getMysql() *zdpgo_mysql.Mysql {
 	m := zdpgo_mysql.New(&zdpgo_mysql.Config{
-		Debug:    true,
-		Host:     "ubuntu20_server",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
 		Password: "root",

@@ -19,9 +19,6 @@ import (
 func (m *Mysql) DeleteTable(tableName string) error {
 	s := fmt.Sprintf("drop table if exists %s;", tableName)
 	_, err := m.Execute(s)
-	if err != nil {
-		m.Log.Error("删除表格失败", "error", err, "sql", s)
-	}
 	return err
 }
 
@@ -33,19 +30,16 @@ func (m *Mysql) DeleteById(table string, id int64) (deleted int64, err error) {
 	// 执行SQL语句
 	ret, err := m.Execute(s)
 	if err != nil {
-		m.Log.Error("执行SQL语句失败", "error", err, "sql", s)
 		return
 	}
 
 	// 处理执行结果
 	deleted, err = ret.RowsAffected()
 	if err != nil {
-		m.Log.Error("获取受影响的行数失败", "error", err)
 		return
 	}
 	if deleted <= 0 {
 		err = errors.New("受影响的行数为0，删除数据失败")
-		m.Log.Error(err.Error())
 		return
 	}
 
@@ -69,19 +63,16 @@ func (m *Mysql) DeleteByIds(table string, ids ...int64) (deleted int64, err erro
 	// 执行SQL语句
 	ret, err := m.Execute(s)
 	if err != nil {
-		m.Log.Error("执行SQL语句失败", "error", err, "sql", s)
 		return
 	}
 
 	// 处理执行结果
 	deleted, err = ret.RowsAffected()
 	if err != nil {
-		m.Log.Error("获取受影响的行数失败", "error", err)
 		return
 	}
 	if deleted <= 0 {
 		err = errors.New("受影响的行数为0，根据ID列表删除失败")
-		m.Log.Error(err.Error())
 		return
 	}
 

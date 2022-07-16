@@ -22,7 +22,6 @@ func (m *Mysql) Execute(sqlStr string, args ...interface{}) (result sql.Result, 
 	// 预处理SQL
 	stmt, err = m.Db.Prepare(sqlStr)
 	if err != nil {
-		m.Log.Error("预处理SQL失败", "error", err)
 		return
 	}
 	defer stmt.Close()
@@ -30,7 +29,6 @@ func (m *Mysql) Execute(sqlStr string, args ...interface{}) (result sql.Result, 
 	// 执行SQL语句
 	result, err = stmt.Exec(args...)
 	if err != nil {
-		m.Log.Error("执行SQL语句失败", "error", err, "sql", sqlStr, "args", args)
 		return
 	}
 

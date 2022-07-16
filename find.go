@@ -27,7 +27,6 @@ func (m *Mysql) FindAllTable() (tables []string, err error) {
 	s := "show tables;"
 	rows, err = m.Query(s)
 	if err != nil {
-		m.Log.Error("查询所有表格失败", "error", err)
 		return
 	}
 
@@ -36,7 +35,6 @@ func (m *Mysql) FindAllTable() (tables []string, err error) {
 		var tableName string
 		err = rows.Scan(&tableName)
 		if err != nil {
-			m.Log.Error("读取表格名称失败", "error", err)
 			return
 		}
 		tables = append(tables, tableName)
@@ -97,7 +95,6 @@ func (m *Mysql) FindByPage(table string, columns []string, page, size int) (rows
 
 	// 处理查询错误
 	if err != nil {
-		m.Log.Error("执行查询失败", "error", err, "s", s)
 		return
 	}
 
@@ -133,7 +130,6 @@ func (m *Mysql) FindByIds(table string, columns []string, ids []int64) (rows *sq
 	// 参数校验
 	if ids == nil {
 		err = errors.New("ids不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 
@@ -160,7 +156,6 @@ func (m *Mysql) FindByIds(table string, columns []string, ids []int64) (rows *sq
 
 	// 处理查询错误
 	if err != nil {
-		m.Log.Error("查询数据失败", "error", err, "sql", s)
 		return
 	}
 
@@ -173,7 +168,6 @@ func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int64, o
 	// 参数校验
 	if ids == nil {
 		err = errors.New("ids不能为空")
-		m.Log.Error(err.Error())
 		return
 	}
 
@@ -199,7 +193,6 @@ func (m *Mysql) FindByIdsToStruct(table string, columns []string, ids []int64, o
 	ctx := context.Background()
 	err = sqlscan.Select(ctx, m.Db, objects, s)
 	if err != nil {
-		m.Log.Error("结构体映射失败", "error", err, "sql", s)
 		return
 	}
 
@@ -221,7 +214,6 @@ func (m *Mysql) FindById(table string, columns []string, id int) (row *sql.Row, 
 	// 执行SQL语句
 	row, err = m.QueryRow(s, id)
 	if err != nil {
-		m.Log.Error("查询单条数据失败", "error", err, "sql", s, "id", id)
 		return
 	}
 
@@ -244,7 +236,6 @@ func (m *Mysql) FindByIdToStruct(table string, columns []string, id int64, objec
 	ctx := context.Background()
 	err = sqlscan.Select(ctx, m.Db, objects, s, id)
 	if err != nil {
-		m.Log.Error("结构体映射失败", "error", err, "sql", s, "id", id)
 		return
 	}
 

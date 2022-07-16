@@ -1,6 +1,9 @@
 package table
 
-import "github.com/zhangdapeng520/zdpgo_mysql"
+import (
+	"fmt"
+	"github.com/zhangdapeng520/zdpgo_mysql"
+)
 
 /*
 @Time : 2022/5/20 20:19
@@ -13,9 +16,9 @@ import "github.com/zhangdapeng520/zdpgo_mysql"
 func FindAllTable(m *zdpgo_mysql.Mysql) {
 	tables, err := m.FindAllTable()
 	if err != nil {
-		m.Log.Panic("FindAll查找所有表格失败", "error", err)
+		panic(err)
 	}
-	m.Log.Debug("查找所有表格成功", "tables", tables)
+	fmt.Println(tables)
 }
 
 func AddTable(m *zdpgo_mysql.Mysql) {
@@ -30,16 +33,13 @@ create table IF NOT EXISTS students
 `
 	err := m.AddTable(sql)
 	if err != nil {
-		m.Log.Panic("创建表格失败", "error", err)
-		return
+		panic(err)
 	}
-	m.Log.Debug("添加表格成功")
 }
 
 func DeleteTable(m *zdpgo_mysql.Mysql) {
 	err := m.DeleteTable("students")
 	if err != nil {
-		m.Log.Panic("删除表格失败", "error", err)
+		panic(err)
 	}
-	m.Log.Debug("删除表格成功")
 }
