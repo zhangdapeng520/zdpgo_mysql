@@ -12,7 +12,12 @@ type Mysql struct {
 	Address string  // Mysql连接地址
 }
 
-func New(config *Config) *Mysql {
+func New() *Mysql {
+	return NewWithConfig(&Config{})
+}
+
+// NewWithConfig 根据配置新增MySQL对象
+func NewWithConfig(config *Config) *Mysql {
 	m := Mysql{}
 
 	// 基本信息
@@ -44,6 +49,9 @@ func New(config *Config) *Mysql {
 
 	// 配置
 	m.Config = config
+
+	// 连接
+	m.IsHealth()
 
 	return &m
 }
