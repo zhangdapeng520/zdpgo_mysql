@@ -1,3 +1,3 @@
 module github.com/zhangdapeng520/zdpgo_mysql
 
-go 1.22
+go 1.21
